@@ -1,0 +1,15 @@
+# Core simulation + API (works on system python3.13)
+numpy>=2.0
+scipy>=1.14
+fastapi>=0.115
+uvicorn[standard]>=0.30
+websockets>=13
+pytest>=8
+
+# RF sensing track
+pyrtlsdr>=0.3.0
+
+# EO/vision track -- install in a SEPARATE venv with cu128 torch:
+#   python3 -m venv .venv-vision && . .venv-vision/bin/activate
+#   pip install torch --index-url https://download.pytorch.org/whl/cu128
+#   pip install ultralytics opencv-python filterpy
