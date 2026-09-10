@@ -124,3 +124,33 @@ def test_range_rejects_nonsense():
         pixels_on_target(s, 0.3, 0.0)
     with pytest.raises(ValueError):
         range_for_pixels(s, 0.3, 0.0)
+
+
+def test_max_plausible_px_rejects_the_full_frame_box():
+    """The measured failure: a 573x478 box in a 640x480 frame, conf 0.71, around
+    a person. Geometry rejects it; no confidence threshold does."""
+    c920 = optics.CATALOG[0]
+    limit = optics.max_plausible_px(c920, target_size_m=0.3, min_range_m=10.0)
+    assert limit == pytest.approx(42.0, rel=0.05)      # ~42 px at 10 m
+
+    observed_box_px = 573 * (c920.h_px / 640)          # scale to sensor width
+    assert observed_box_px > limit * 10                # rejected by an order of magnitude
+
+
+def test_gate_keeps_targets_at_every_useful_range():
+    """A gate that rejected real targets would be worse than no gate."""
+    c920 = optics.CATALOG[0]
+    limit = optics.max_plausible_px(c920, 0.3, min_range_m=10.0)
+    for r in (15.0, 50.0, 200.0, 1000.0):
+        assert pixels_on_target(c920, 0.3, r) < limit
+
+
+def test_closer_minimum_range_permits_a_wider_box():
+    c920 = optics.CATALOG[0]
+    assert (optics.max_plausible_px(c920, 0.3, 5.0)
+            > optics.max_plausible_px(c920, 0.3, 20.0))
+
+
+def test_max_plausible_px_rejects_nonsense():
+    with pytest.raises(ValueError):
+        optics.max_plausible_px(optics.CATALOG[0], 0.3, 0.0)

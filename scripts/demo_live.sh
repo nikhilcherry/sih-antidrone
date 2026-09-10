@@ -4,21 +4,26 @@
 #   ./scripts/demo_live.sh              # from the Pi over the USB link
 #   ./scripts/demo_live.sh --local      # rehearse on the laptop's own webcam
 #   ./scripts/demo_live.sh --host 192.168.1.50   # Pi over Wi-Fi instead
+#   ./scripts/demo_live.sh --local --no-gate     # rehearsing with a drone PHOTO
+#   ./scripts/demo_live.sh --local --raw         # ungated, for comparison
 #
 # The detector is the model from the Drone_Ml repo, unmodified. It already
 # accepts a URL as --source, and the Pi serves MJPEG over HTTP, so the two
 # halves meet with no glue code.
 set -euo pipefail
 
+REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 DRONE_ML=${DRONE_ML:-$HOME/Projects/Drone_Ml}
 PI_HOST=10.55.0.1
 PORT=8485
 LOCAL=0
+RAW=0
 EXTRA=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --local) LOCAL=1; shift ;;
+    --raw)   RAW=1; shift ;;
     --host)  PI_HOST="$2"; shift 2 ;;
     --port)  PORT="$2"; shift 2 ;;
     *)       EXTRA+=("$1"); shift ;;
@@ -73,11 +78,25 @@ echo "==> weights: $WEIGHTS"
 echo "==> detector: p2_s (P2 head, val mAP50 0.915). Q to quit."
 echo
 
-# cd into Drone_Ml: realtime_track.py resolves cfg/bytetrack_drone.yaml relatively.
-cd "$DRONE_ML"
-exec "$PY" realtime_track.py \
+if [[ $RAW == 1 ]]; then
+  # The Drone_Ml script unmodified: no geometry gate, so pointed at a room it
+  # draws a confident full-frame box around whatever it sees. Kept for
+  # comparison, and because it is the detector's own honest output.
+  cd "$DRONE_ML"
+  exec "$PY" realtime_track.py \
+      --source "$SOURCE" --weights "$WEIGHTS" \
+      --imgsz 640 --device 0 "${EXTRA[@]}"
+fi
+
+# Default: the same detector behind a geometry gate. A 0.3 m drone cannot be
+# wider than ~47 px on a 640-wide frame without being closer than 3 m, so
+# degenerate full-frame boxes are rejected on physics rather than confidence.
+# Add --no-gate when rehearsing with a drone PHOTO held up to the camera.
+cd "$REPO"
+exec "$PY" -m himkavach.eo.detect_live \
     --source "$SOURCE" \
     --weights "$WEIGHTS" \
+    --tracker "$DRONE_ML/cfg/bytetrack_drone.yaml" \
     --imgsz 640 \
     --device 0 \
     "${EXTRA[@]}"

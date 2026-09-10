@@ -85,6 +85,29 @@ def hfov_deg(sensor_width_mm: float, focal_mm: float) -> float:
     return degrees(2.0 * atan(sensor_width_mm / (2.0 * focal_mm)))
 
 
+def max_plausible_px(sensor: Sensor, target_size_m: float, min_range_m: float) -> float:
+    """Widest a real target can appear, given the closest range worth engaging.
+
+    The basis for rejecting degenerate detections. A detector fed input unlike
+    its training data emits confident full-frame boxes -- measured here at 0.71
+    confidence around a person indoors, spanning 89% of the frame. No confidence
+    threshold removes those, because they are not low-confidence.
+
+    Geometry does remove them. A 0.3 m quadcopter is ~42 px wide at 10 m on a
+    78 deg lens; a box spanning most of the frame implies a drone centimetres
+    from the lens. Rejecting boxes wider than this is a physical argument, not a
+    tuned threshold, and it cannot reject a target at any range you would care
+    about.
+
+    CAVEAT: rehearsing by holding a drone PHOTO up to the camera violates the
+    same geometry -- the pictured drone is 30 cm away. Raise the limit or
+    disable the gate for that rehearsal.
+    """
+    if min_range_m <= 0:
+        raise ValueError("min_range_m must be positive")
+    return pixels_on_target(sensor, target_size_m, min_range_m)
+
+
 def pointing_error_px(sensor: Sensor, pointing_error_urad: float) -> float:
     """Pointing error expressed in pixels of smear on the focal plane.
 

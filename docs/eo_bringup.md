@@ -339,9 +339,28 @@ those boxes survives a 0.50 threshold.
 1. **Point the camera at sky.** Indoors, at a room, or at a person, it will
    confidently label them a drone. In front of a judging panel that is worse
    than detecting nothing.
-2. **A geometry gate would reject it for free.** §1 gives the argument: a 0.3 m
-   drone is 4.2 px wide at 100 m on a wide lens, and ~42 px at 10 m — about 2%
-   of frame width. A box spanning 89% of the frame would be a drone a few
-   centimetres from the lens, which is physically absurd. Rejecting any box
-   wider than ~25% of the frame costs nothing real and removes this entire
-   failure class. `optics.pixels_on_target()` already supplies the threshold.
+2. **A geometry gate rejects it for free — now implemented.** §1 gives the
+   argument: a 0.3 m drone is 4.2 px wide at 100 m on a wide lens. A box
+   spanning 89% of the frame would be a drone a few centimetres from the lens,
+   which is physically absurd. `optics.max_plausible_px()` supplies the
+   threshold and `himkavach/eo/detect_live.py` applies it.
+
+### Measured, same camera, same room
+
+| | Boxes drawn | Frames with a "drone" |
+|---|---|---|
+| Ungated (`--raw`) | 2312 | **99%** |
+| Gated (default) | **0** | **0%** (866 rejected) |
+
+The gate defaults to a 3 m minimum range — 47 px on a 640-wide frame. It only
+has to reject the *impossible*, not be maximally tight: that still vetoes the
+measured 573 px box by 12x while accepting a drone anywhere beyond 3 m. Tests
+assert it never rejects a target at 15 m, 50 m, 200 m or 1 km. The deployed
+system would use 10 m.
+
+Rejected boxes are drawn dimmed and labelled rather than dropped silently — a
+filter nobody can see is a filter nobody can defend. `--raw` runs the ungated
+Drone_Ml script for a before/after comparison, which is worth showing a panel.
+
+**Use `--no-gate` when rehearsing with a drone photo held to the camera.** The
+pictured drone is 30 cm away, so the gate is correct to reject it.
