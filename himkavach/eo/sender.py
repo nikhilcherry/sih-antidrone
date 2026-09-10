@@ -40,7 +40,8 @@ def parse_size(text: str) -> tuple[int, int]:
     return int(w), int(h)
 
 
-def open_camera(device: str, width: int, height: int, fps: int) -> cv2.VideoCapture:
+def open_camera(device: str, width: int, height: int, fps: int,
+                exposure: str = "auto") -> cv2.VideoCapture:
     # CAP_V4L2 explicitly: the default backend on Linux can pick GStreamer and
     # silently ignore the property sets below.
     index_or_path: object = int(device) if device.isdigit() else device
@@ -53,6 +54,18 @@ def open_camera(device: str, width: int, height: int, fps: int) -> cv2.VideoCapt
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     cap.set(cv2.CAP_PROP_FPS, fps)
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+
+    # UVC control values PERSIST IN THE DRIVER after the process exits. A tool
+    # that once set manual exposure leaves the camera that way for every later
+    # program, and the symptom is a pure-black feed that looks like a broken
+    # camera or broken code. Always state the exposure mode explicitly rather
+    # than inheriting whatever the last process left behind.
+    # V4L2: 3 = aperture-priority (auto), 1 = manual.
+    if exposure == "auto":
+        cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 3)
+    else:
+        cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+        cap.set(cv2.CAP_PROP_EXPOSURE, float(exposure))
 
     actual = (
         int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
@@ -129,13 +142,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--size", default="1280x720", help="WxH")
     ap.add_argument("--fps", type=int, default=30)
     ap.add_argument("--quality", type=int, default=80, help="JPEG quality 1-100")
+    ap.add_argument("--exposure", default="auto",
+                    help="'auto', or a manual V4L2 exposure value. Short manual "
+                         "exposures freeze a fast target but need a bright sky; "
+                         "auto is right indoors. UVC cameras REMEMBER this "
+                         "between processes, so it is always set explicitly")
     ap.add_argument("--http", action="store_true",
                     help="serve MJPEG over HTTP instead of the raw TCP protocol; "
                          "consumable by cv2.VideoCapture and by any browser")
     args = ap.parse_args(argv)
 
     width, height = parse_size(args.size)
-    cap = open_camera(args.device, width, height, args.fps)
+    cap = open_camera(args.device, width, height, args.fps, args.exposure)
     try:
         if args.http:
             from .http_stream import serve_http

@@ -34,6 +34,19 @@ WEIGHTS="$DRONE_ML/runs/detect/runs/detect/p2_s/weights/best.pt"
 if [[ $LOCAL == 1 ]]; then
   SOURCE=0
   echo "==> rehearsal mode: laptop webcam, no Pi involved"
+  # UVC exposure settings persist in the driver between processes: if anything
+  # previously put this camera in manual exposure, the feed comes up BLACK and
+  # looks like a broken camera. realtime_track.py opens the device raw, so
+  # force auto-exposure back on before handing over.
+  "$PY" - <<'RESET'
+import cv2
+c = cv2.VideoCapture(0, cv2.CAP_V4L2)
+if c.isOpened():
+    c.set(cv2.CAP_PROP_AUTO_EXPOSURE, 3)   # 3 = auto, 1 = manual
+    for _ in range(5): c.read()
+    c.release()
+    print("    camera reset to auto-exposure")
+RESET
 else
   SOURCE="http://$PI_HOST:$PORT/stream.mjpg"
   echo "==> source: $SOURCE"

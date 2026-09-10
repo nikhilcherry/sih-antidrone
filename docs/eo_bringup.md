@@ -300,3 +300,48 @@ trained on drones against **sky and buildings**. Against grass or trees it
 detects far less, and tracking cannot recover a target the detector never finds
 once. Combined with §1, the EO channel is a **short-range cueing and
 identification sensor**, and the RF channel is what carries detection range.
+
+
+---
+
+## 7. Two failures found while rehearsing (2026-09-10)
+
+### The feed came up black
+
+Mean frame brightness was 1/255 — no light at all, not a dark room. Cause: a
+benchmark had put the camera in **manual exposure**, and **UVC control values
+persist in the kernel driver after the process that set them exits**. Every
+later program inherited a black frame.
+
+Guarded now: `sender.py` sets the exposure mode explicitly on every open
+(`--exposure auto|<value>`), and `demo_live.sh --local` resets auto-exposure
+before handing the camera over. If a feed is ever black, suspect this before
+suspecting the camera or the cable — it applies to the Pi's USB camera too.
+
+For a real drone against bright sky, prefer **manual** short exposure
+(`--exposure 50`): it freezes a fast target instead of smearing it. Auto is only
+right indoors.
+
+### The model called a person a drone, at 0.71 confidence
+
+With a normal picture, the detector put a box on **100% of frames, median
+confidence 0.767** — pointed at an empty room and at a person. The box measured
+573x478 in a 640x480 frame: **89% of the frame area**. That is not a detection,
+it is a degenerate full-frame box on out-of-distribution input.
+
+This is exactly the limit `realtime_track.py` already states — trained on drones
+against sky and buildings — but it is worth seeing the failure shape, because it
+is confident, not tentative. Raising `--conf` does **not** help: every one of
+those boxes survives a 0.50 threshold.
+
+**Consequences for the demo:**
+
+1. **Point the camera at sky.** Indoors, at a room, or at a person, it will
+   confidently label them a drone. In front of a judging panel that is worse
+   than detecting nothing.
+2. **A geometry gate would reject it for free.** §1 gives the argument: a 0.3 m
+   drone is 4.2 px wide at 100 m on a wide lens, and ~42 px at 10 m — about 2%
+   of frame width. A box spanning 89% of the frame would be a drone a few
+   centimetres from the lens, which is physically absurd. Rejecting any box
+   wider than ~25% of the frame costs nothing real and removes this entire
+   failure class. `optics.pixels_on_target()` already supplies the threshold.
