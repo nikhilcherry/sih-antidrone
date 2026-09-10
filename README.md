@@ -81,6 +81,8 @@ scripts/setup_pi_gadget.sh Pi USB-Ethernet gadget mode (run ON the Pi)
 scripts/laptop_usb_link.sh laptop end of the USB link
 scripts/eo_loopback_test.sh prove the EO chain with no Pi attached
 scripts/latency_timer.py   optical glass-to-display latency measurement
+scripts/demo_live.sh       the demo: Pi camera -> laptop -> detector -> boxes
+himkavach/eo/http_stream.py MJPEG over HTTP, so any tool can open the feed
 ```
 
 ## Setup
@@ -119,3 +121,21 @@ rather than asserting it. Two results we state rather than hide:
 
 Link latency is measured optically (`scripts/latency_timer.py`), never by
 subtracting unsynchronised clocks across the USB link.
+
+## The live demo
+
+```bash
+python3 -m himkavach.eo.sender --http     # on the Pi
+./scripts/demo_live.sh                    # on the laptop  (--local to rehearse)
+```
+
+Detection is the model from [`Drone_Ml`](https://github.com/nikhilcherry/Drone_Ml)
+(`p2_s`, val mAP50 **0.915**), used **unmodified** — the Pi serves MJPEG over
+HTTP and that repo's `realtime_track.py` already takes a URL as `--source`, so
+the two halves meet with no glue code.
+
+Measured on this laptop: **131 FPS** pure inference on the RTX 5050 against a
+camera delivering 18. The sensor is the bottleneck by ~7×, so the demo is
+frame-rate limited by what you point at the sky, not by the model. Tiled
+inference (5.2 FPS) stays offline; TTA is affordable but did not measurably
+help. Details and the honest limits are in `docs/eo_bringup.md`.

@@ -227,3 +227,76 @@ CPU-bound.
 yielding `(seq, cap_ts, decode_ms, frame)`. The YOLO stage consumes that and
 never learns there was a socket involved. That venv still needs the cu128 torch
 build — see `requirements.txt`.
+
+
+---
+
+## 6. Detection on the laptop ✅ *(measured)*
+
+The detector is the model from **`~/Projects/Drone_Ml`**, used unmodified. That
+repo's `realtime_track.py` already accepts a URL as `--source`, and the Pi can
+serve MJPEG over HTTP, so the two halves meet with no glue code:
+
+```bash
+# Pi
+python3 -m himkavach.eo.sender --http
+
+# laptop
+./scripts/demo_live.sh                 # or --local to rehearse on the laptop cam
+```
+
+`demo_live.sh` picks the `p2_s` weights, checks the stream is actually serving
+before handing off (OpenCV reports an unopenable URL as an empty capture and no
+reason at all), and forces `QT_QPA_PLATFORM=xcb`.
+
+### Which model, and why
+
+| Run | val mAP50 | Notes |
+|---|---|---|
+| **`p2_s`** | **0.915** | P2 detection head — extra stride-4 level for small objects |
+| `public_s` | 0.904 (test 0.899) | no P2 head |
+
+`p2_s` is the pick. The P2 head exists precisely for targets a few pixels
+across, which is what §1 shows a drone is at any useful range.
+
+Spot-checked here against the leak-free val split, at `conf 0.25`:
+
+| Sample | Recall | False alarms |
+|---|---|---|
+| 60 positives / 40 negatives | 83% | 2% |
+| 120 positives / 60 negatives | 77.5% | 3.3% |
+
+Consistent with the repo's reported R = 0.855. **Note the val split contains 66
+negatives** — an image with no drone is not a failure, and the first file
+alphabetically is one of them, which makes a naive "run it on the first image"
+smoke test look broken.
+
+### Measured speed, and what it means
+
+| Path | Rate | Live-capable at 30 fps? |
+|---|---|---|
+| Pure inference, imgsz 640 | **131 FPS** | yes, 4× headroom |
+| TTA (`--tta`) | 46.7 FPS | yes |
+| Tiled (`--tile`, 320 px) | 5.2 FPS | **no** |
+| Full chain, laptop webcam | 17.5 FPS | camera-limited, not GPU-limited |
+
+Three conclusions:
+
+1. **The camera is the bottleneck, not the GPU.** The chain ran at 17.5 FPS
+   because this laptop's webcam delivers 18. The RTX 5050 has roughly 7× more
+   detection throughput than the sensor can feed it. Buying a faster camera buys
+   frames; optimising the model buys nothing.
+2. **Tiling stays offline.** At 5.2 FPS it cannot drive a live feed, confirming
+   the warning already in `realtime_track.py`. Use it on recorded footage.
+3. **Skip TTA for the demo.** It is fast enough, but measured here it bought
+   +3.3 pp recall for +1.7 pp false alarms on 120/60 images — inside the noise
+   at that sample size — and the Drone_Ml test split already showed TTA
+   *losing* (mAP50 0.891 vs 0.899). Fast does not mean better.
+
+### Honest limits to state before anyone asks
+
+`realtime_track.py` says it plainly and so should the pitch: the model was
+trained on drones against **sky and buildings**. Against grass or trees it
+detects far less, and tracking cannot recover a target the detector never finds
+once. Combined with §1, the EO channel is a **short-range cueing and
+identification sensor**, and the RF channel is what carries detection range.

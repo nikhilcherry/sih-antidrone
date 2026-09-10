@@ -5,6 +5,12 @@ TCP to whichever laptop connects. The Pi is the server so the laptop side can be
 restarted freely during development without touching the Pi.
 
     python3 -m himkavach.eo.sender --device /dev/video0 --size 1280x720 --fps 30
+    python3 -m himkavach.eo.sender --http          # MJPEG over HTTP instead
+
+Two wire modes. Raw TCP (default) carries sequence numbers and timing, which
+`receiver.py` turns into link-health stats. `--http` serves MJPEG at a URL that
+`cv2.VideoCapture` opens directly, so the Drone_Ml detector consumes the feed
+through its existing --source argument with no code change.
 
 Latency notes that matter more than they look:
   * CAP_PROP_BUFFERSIZE=1 -- without it V4L2/OpenCV queues frames and you end up
@@ -123,12 +129,19 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--size", default="1280x720", help="WxH")
     ap.add_argument("--fps", type=int, default=30)
     ap.add_argument("--quality", type=int, default=80, help="JPEG quality 1-100")
+    ap.add_argument("--http", action="store_true",
+                    help="serve MJPEG over HTTP instead of the raw TCP protocol; "
+                         "consumable by cv2.VideoCapture and by any browser")
     args = ap.parse_args(argv)
 
     width, height = parse_size(args.size)
     cap = open_camera(args.device, width, height, args.fps)
     try:
-        serve(args.host, args.port, cap, args.quality)
+        if args.http:
+            from .http_stream import serve_http
+            serve_http(args.host, args.port, cap, args.quality)
+        else:
+            serve(args.host, args.port, cap, args.quality)
     except KeyboardInterrupt:
         print("\n[sender] stopped", file=sys.stderr)
     finally:
