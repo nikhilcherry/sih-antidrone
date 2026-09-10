@@ -69,9 +69,18 @@ evaluated against the tracked target. The SDR is receive-only.
 himkavach/atmosphere.py    ISA + cold-bias, Paschen derating, convective scaling
 himkavach/degradation.py   per-subsystem environmental degradation models
 himkavach/sim.py           azimuth pointing loop, uncompensated vs compensated
+himkavach/eo/optics.py     sensor geometry: what the camera can actually see
+himkavach/eo/sender.py     Pi side: USB webcam -> JPEG -> TCP
+himkavach/eo/receiver.py   laptop side: decode, link health, feeds detection
+himkavach/eo/protocol.py   the wire format, 24-byte header per frame
 demo_pointing.py           the headline sweep
 tests/test_models.py       physics guards — these protect the pitch numbers
+tests/test_eo.py           wire-format and sensor-geometry guards
 scripts/setup_sdr.sh       RTL-SDR bring-up (blacklist DVB-T, udev rules)
+scripts/setup_pi_gadget.sh Pi USB-Ethernet gadget mode (run ON the Pi)
+scripts/laptop_usb_link.sh laptop end of the USB link
+scripts/eo_loopback_test.sh prove the EO chain with no Pi attached
+scripts/latency_timer.py   optical glass-to-display latency measurement
 ```
 
 ## Setup
@@ -84,5 +93,29 @@ python3 demo_pointing.py
 ./scripts/setup_sdr.sh        # once, then replug the dongle
 ```
 
+```bash
+./scripts/eo_loopback_test.sh   # EO chain, laptop webcam, no Pi needed
+```
+
 Vision track needs its own venv — system torch is CPU-only and the RTX 5050
 (Blackwell, sm_120) requires the cu128 build. See `requirements.txt`.
+
+## The EO channel, and its honest limit
+
+A Raspberry Pi carries the camera at the mount and streams to the laptop over a
+single USB cable in Ethernet-gadget mode. Bring-up, the buy decision and the
+power trap are in [`docs/eo_bringup.md`](docs/eo_bringup.md).
+
+`python3 -m himkavach.eo.optics` derives detection range from sensor geometry
+rather than asserting it. Two results we state rather than hide:
+
+- A **stock wide-angle webcam recognises a 0.3 m quadcopter to about 50 m**.
+  The target is under one pixel at 500 m. EO is a short-range cueing and ID
+  sensor slaved to the RF channel — an M12 lens mount and a 35 mm lens takes
+  that to ~400 m, which is where the money should go.
+- The **295 µrad compensated pointing error is 0.42 px on that webcam** — the
+  servo out-resolves the sensor, so the compensation result is invisible in the
+  EO channel until the lens is narrower than ~33°.
+
+Link latency is measured optically (`scripts/latency_timer.py`), never by
+subtracting unsynchronised clocks across the USB link.
