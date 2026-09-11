@@ -23,17 +23,17 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import cv2
 
-BOUNDARY = "himkavachframe"
+BOUNDARY = "auraframe"
 
 _PAGE = b"""<!doctype html><meta charset=utf-8>
-<title>HIMKAVACH EO</title>
+<title>AURA EO</title>
 <style>
  body{margin:0;background:#0b0d10;color:#c9d1d9;font:14px system-ui,sans-serif;
       display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px}
  img{max-width:100%;border:1px solid #30363d;border-radius:6px}
  code{color:#8b949e}
 </style>
-<h3>HIMKAVACH &mdash; EO node</h3>
+<h3>AURA &mdash; EO node</h3>
 <img src="/stream.mjpg" alt="live feed">
 <code>cv2.VideoCapture("http://HOST:PORT/stream.mjpg")</code>
 """

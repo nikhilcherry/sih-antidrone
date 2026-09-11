@@ -1,4 +1,4 @@
-# HIMKAVACH — High-Altitude Anti-Drone System
+# AURA — High-Altitude Anti-Drone System
 
 **SIH 2026 · PS SIH26050 · DRDO / Dept. of Defence Production (iDEX) · Hardware**
 
@@ -7,7 +7,7 @@
 > shift, and a system specified in microradians loses its pointing budget to
 > physics nobody compensated for.
 
-HIMKAVACH is a detect–track–identify–engage pipeline **plus** the thing the PS
+AURA is a detect–track–identify–engage pipeline **plus** the thing the PS
 actually asks for and most teams will skip: a quantified environmental
 degradation model and a compensation layer that holds pointing accuracy
 constant with altitude.
@@ -66,13 +66,13 @@ evaluated against the tracked target. The SDR is receive-only.
 ## Layout
 
 ```
-himkavach/atmosphere.py    ISA + cold-bias, Paschen derating, convective scaling
-himkavach/degradation.py   per-subsystem environmental degradation models
-himkavach/sim.py           azimuth pointing loop, uncompensated vs compensated
-himkavach/eo/optics.py     sensor geometry: what the camera can actually see
-himkavach/eo/sender.py     Pi side: USB webcam -> JPEG -> TCP
-himkavach/eo/receiver.py   laptop side: decode, link health, feeds detection
-himkavach/eo/protocol.py   the wire format, 24-byte header per frame
+aura/atmosphere.py         ISA + cold-bias, Paschen derating, convective scaling
+aura/degradation.py        per-subsystem environmental degradation models
+aura/sim.py                azimuth pointing loop, uncompensated vs compensated
+aura/eo/optics.py          sensor geometry: what the camera can actually see
+aura/eo/sender.py          Pi side: USB webcam -> JPEG -> TCP
+aura/eo/receiver.py        laptop side: decode, link health, feeds detection
+aura/eo/protocol.py        the wire format, 24-byte header per frame
 demo_pointing.py           the headline sweep
 tests/test_models.py       physics guards — these protect the pitch numbers
 tests/test_eo.py           wire-format and sensor-geometry guards
@@ -82,7 +82,7 @@ scripts/laptop_usb_link.sh laptop end of the USB link
 scripts/eo_loopback_test.sh prove the EO chain with no Pi attached
 scripts/latency_timer.py   optical glass-to-display latency measurement
 scripts/demo_live.sh       the demo: Pi camera -> laptop -> detector -> boxes
-himkavach/eo/http_stream.py MJPEG over HTTP, so any tool can open the feed
+aura/eo/http_stream.py     MJPEG over HTTP, so any tool can open the feed
 ```
 
 ## Setup
@@ -108,7 +108,7 @@ A Raspberry Pi carries the camera at the mount and streams to the laptop over a
 single USB cable in Ethernet-gadget mode. Bring-up, the buy decision and the
 power trap are in [`docs/eo_bringup.md`](docs/eo_bringup.md).
 
-`python3 -m himkavach.eo.optics` derives detection range from sensor geometry
+`python3 -m aura.eo.optics` derives detection range from sensor geometry
 rather than asserting it. Two results we state rather than hide:
 
 - A **stock wide-angle webcam recognises a 0.3 m quadcopter to about 50 m**.
@@ -125,7 +125,7 @@ subtracting unsynchronised clocks across the USB link.
 ## The live demo
 
 ```bash
-python3 -m himkavach.eo.sender --http     # on the Pi
+python3 -m aura.eo.sender --http     # on the Pi
 ./scripts/demo_live.sh                    # on the laptop  (--local to rehearse)
 ```
 

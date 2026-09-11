@@ -2,9 +2,9 @@
 import numpy as np
 import pytest
 
-from himkavach.atmosphere import atmosphere, convective_cooling_factor, RHO_SL
-from himkavach import degradation as deg
-from himkavach.sim import run
+from aura.atmosphere import atmosphere, convective_cooling_factor, RHO_SL
+from aura import degradation as deg
+from aura.sim import run
 
 
 def test_isa_matches_known_values():

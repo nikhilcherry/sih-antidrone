@@ -16,9 +16,9 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 [[ -e "$DEVICE" ]] || { echo "ERROR: $DEVICE not present. Try: ls /dev/video*" >&2; exit 1; }
 
 echo "==> starting sender on $DEVICE at $SIZE"
-python3 -m himkavach.eo.sender --device "$DEVICE" --size "$SIZE" --port "$PORT" &
+python3 -m aura.eo.sender --device "$DEVICE" --size "$SIZE" --port "$PORT" &
 SENDER_PID=$!
-# Kill by PID, never `pkill -f himkavach.eo.sender` -- that pattern also matches
+# Kill by PID, never `pkill -f aura.eo.sender` -- that pattern also matches
 # this script's own command line and takes the whole shell down with it.
 trap 'kill "$SENDER_PID" 2>/dev/null || true' EXIT
 
@@ -26,7 +26,7 @@ sleep 3
 kill -0 "$SENDER_PID" 2>/dev/null || { echo "ERROR: sender died on startup" >&2; exit 1; }
 
 echo "==> receiving $FRAMES frames"
-python3 -m himkavach.eo.receiver --host 127.0.0.1 --port "$PORT" \
+python3 -m aura.eo.receiver --host 127.0.0.1 --port "$PORT" \
     --max-frames "$FRAMES" --no-retry
 
 echo

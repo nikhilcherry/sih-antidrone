@@ -61,7 +61,7 @@ else
     cat >&2 <<MSG
 ERROR: nothing serving at http://$PI_HOST:$PORT/
 
-On the Pi:  python3 -m himkavach.eo.sender --http
+On the Pi:  python3 -m aura.eo.sender --http
 If that is running, check the link:  ./scripts/laptop_usb_link.sh
 MSG
     exit 1
@@ -71,8 +71,8 @@ fi
 # COSMIC exports QT_QPA_PLATFORM=wayland, and the OpenCV wheel ships no Qt
 # wayland plugin -- it falls back to xcb with a wall of warnings, and on some
 # sessions fails to open the window at all. Force xcb: a `:-` default would
-# inherit COSMIC's wayland and defeat the point. HIMKAVACH_QT=1 to opt out.
-[[ -z "${HIMKAVACH_QT:-}" ]] && export QT_QPA_PLATFORM=xcb
+# inherit COSMIC's wayland and defeat the point. AURA_QT=1 to opt out.
+[[ -z "${AURA_QT:-}" ]] && export QT_QPA_PLATFORM=xcb
 
 echo "==> weights: $WEIGHTS"
 echo "==> detector: p2_s (P2 head, val mAP50 0.915). Q to quit."
@@ -93,7 +93,7 @@ fi
 # degenerate full-frame boxes are rejected on physics rather than confidence.
 # Add --no-gate when rehearsing with a drone PHOTO held up to the camera.
 cd "$REPO"
-exec "$PY" -m himkavach.eo.detect_live \
+exec "$PY" -m aura.eo.detect_live \
     --source "$SOURCE" \
     --weights "$WEIGHTS" \
     --tracker "$DRONE_ML/cfg/bytetrack_drone.yaml" \

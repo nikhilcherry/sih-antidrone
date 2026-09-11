@@ -15,8 +15,8 @@ lens. The threshold comes from `optics.max_plausible_px()`, so it is a physical
 argument rather than a tuned constant, and it cannot reject a target at any
 range worth engaging.
 
-    python3 -m himkavach.eo.detect_live --source 0
-    python3 -m himkavach.eo.detect_live --source http://10.55.0.1:8485/stream.mjpg
+    python3 -m aura.eo.detect_live --source 0
+    python3 -m aura.eo.detect_live --source http://10.55.0.1:8485/stream.mjpg
 
 Rejected boxes are counted and shown, never silently dropped -- a filter you
 cannot see is a filter you cannot defend.
@@ -165,7 +165,7 @@ def main(argv: list[str] | None = None) -> int:
         cv2.putText(frame, f"{fps:5.1f} FPS   drones: {len(kept)}   "
                            f"gate rejected: {rejected}",
                     (10, 24), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-        cv2.imshow("HIMKAVACH EO - gated (Q to quit)", frame)
+        cv2.imshow("AURA EO - gated (Q to quit)", frame)
         if writer:
             writer.write(frame)
         if cv2.waitKey(1) & 0xFF in (ord("q"), ord("Q"), 27):

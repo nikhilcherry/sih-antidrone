@@ -7,7 +7,7 @@ set -euo pipefail
 PI_IP=10.55.0.1
 LAPTOP_IP=10.55.0.2
 PREFIX=29
-CON_NAME=himkavach-eo
+CON_NAME=aura-eo
 
 echo "==> looking for a USB Ethernet gadget interface"
 IFACE=""
@@ -61,13 +61,13 @@ if ping -c 3 -W 2 "$PI_IP" >/dev/null 2>&1; then
 else
   echo "    NO REPLY from $PI_IP." >&2
   echo "    On the Pi run: ip addr show usb0   (expect $PI_IP)" >&2
-  echo "    If usb0 exists but has no address: systemctl status himkavach-usb0" >&2
+  echo "    If usb0 exists but has no address: systemctl status aura-usb0" >&2
   exit 1
 fi
 
 echo
 echo "Start the stream:"
-echo "  Pi:      python3 -m himkavach.eo.sender --device /dev/video0 --size 1280x720 --fps 30"
-echo "  Laptop:  python3 -m himkavach.eo.receiver --host $PI_IP --show"
+echo "  Pi:      python3 -m aura.eo.sender --device /dev/video0 --size 1280x720 --fps 30"
+echo "  Laptop:  python3 -m aura.eo.receiver --host $PI_IP --show"
 echo
 echo "Remove:  nmcli connection delete $CON_NAME"

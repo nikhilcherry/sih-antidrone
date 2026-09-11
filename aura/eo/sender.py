@@ -4,8 +4,8 @@ Captures from a USB (UVC) webcam and streams length-prefixed JPEG frames over
 TCP to whichever laptop connects. The Pi is the server so the laptop side can be
 restarted freely during development without touching the Pi.
 
-    python3 -m himkavach.eo.sender --device /dev/video0 --size 1280x720 --fps 30
-    python3 -m himkavach.eo.sender --http          # MJPEG over HTTP instead
+    python3 -m aura.eo.sender --device /dev/video0 --size 1280x720 --fps 30
+    python3 -m aura.eo.sender --http          # MJPEG over HTTP instead
 
 Two wire modes. Raw TCP (default) carries sequence numbers and timing, which
 `receiver.py` turns into link-health stats. `--http` serves MJPEG at a URL that
@@ -135,7 +135,7 @@ def serve(host: str, port: int, cap: cv2.VideoCapture, quality: int) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="HIMKAVACH EO sender (Raspberry Pi side)")
+    ap = argparse.ArgumentParser(description="AURA EO sender (Raspberry Pi side)")
     ap.add_argument("--device", default="/dev/video0", help="V4L2 device path or index")
     ap.add_argument("--host", default="0.0.0.0", help="bind address")
     ap.add_argument("--port", type=int, default=8485)

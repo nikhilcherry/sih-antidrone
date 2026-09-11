@@ -41,8 +41,8 @@ case "$MODEL" in
 esac
 
 echo "==> backing up boot config"
-sudo cp -n "$CONFIG" "$CONFIG.himkavach.bak"
-sudo cp -n "$CMDLINE" "$CMDLINE.himkavach.bak"
+sudo cp -n "$CONFIG" "$CONFIG.aura.bak"
+sudo cp -n "$CMDLINE" "$CMDLINE.aura.bak"
 
 echo "==> enabling the dwc2 OTG controller in $CONFIG"
 if ! grep -q '^dtoverlay=dwc2' "$CONFIG"; then
@@ -67,9 +67,9 @@ fi
 echo "==> pinning $PI_IP on usb0"
 # NetworkManager owns interfaces on Bookworm but will not know about usb0 until
 # it exists, so a oneshot unit ordered after the device is the reliable path.
-sudo tee /etc/systemd/system/himkavach-usb0.service >/dev/null <<UNIT
+sudo tee /etc/systemd/system/aura-usb0.service >/dev/null <<UNIT
 [Unit]
-Description=HIMKAVACH EO link: static address on the USB gadget interface
+Description=AURA EO link: static address on the USB gadget interface
 After=sys-subsystem-net-devices-usb0.device
 BindsTo=sys-subsystem-net-devices-usb0.device
 
@@ -82,28 +82,28 @@ ExecStart=/sbin/ip link set usb0 up
 [Install]
 WantedBy=sys-subsystem-net-devices-usb0.device
 UNIT
-sudo systemctl enable himkavach-usb0.service
+sudo systemctl enable aura-usb0.service
 
 if [[ $INSTALL_SERVICE == 1 ]]; then
   echo "==> installing the EO sender as a service"
   REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-  sudo tee /etc/systemd/system/himkavach-eo.service >/dev/null <<UNIT
+  sudo tee /etc/systemd/system/aura-eo.service >/dev/null <<UNIT
 [Unit]
-Description=HIMKAVACH EO sender (USB webcam -> laptop)
-After=himkavach-usb0.service
-Wants=himkavach-usb0.service
+Description=AURA EO sender (USB webcam -> laptop)
+After=aura-usb0.service
+Wants=aura-usb0.service
 
 [Service]
 User=$USER
 WorkingDirectory=$REPO
-ExecStart=/usr/bin/python3 -m himkavach.eo.sender --device /dev/video0 --size 1280x720 --fps 30
+ExecStart=/usr/bin/python3 -m aura.eo.sender --device /dev/video0 --size 1280x720 --fps 30
 Restart=always
 RestartSec=2
 
 [Install]
 WantedBy=multi-user.target
 UNIT
-  sudo systemctl enable himkavach-eo.service
+  sudo systemctl enable aura-eo.service
 fi
 
 echo
@@ -114,4 +114,4 @@ echo
 echo "    On the Pi after reboot:   ip addr show usb0        # expect $PI_IP"
 echo "    On the laptop:            ./scripts/laptop_usb_link.sh"
 echo
-echo "    Undo:  sudo cp $CONFIG.himkavach.bak $CONFIG && sudo cp $CMDLINE.himkavach.bak $CMDLINE"
+echo "    Undo:  sudo cp $CONFIG.aura.bak $CONFIG && sudo cp $CMDLINE.aura.bak $CMDLINE"

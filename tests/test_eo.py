@@ -5,13 +5,13 @@ are not allowed to drift silently.
 """
 import pytest
 
-from himkavach.degradation import eo_detection_range
-from himkavach.eo import optics
-from himkavach.eo.optics import (
+from aura.degradation import eo_detection_range
+from aura.eo import optics
+from aura.eo.optics import (
     DETECT_PX, RECOGNISE_PX, Sensor, focal_length_mm, hfov_deg,
     hfov_for_range, pixels_on_target, pointing_error_px, range_for_pixels,
 )
-from himkavach.eo.protocol import HEADER_SIZE, pack_header, unpack_header
+from aura.eo.protocol import HEADER_SIZE, pack_header, unpack_header
 
 
 # --- wire format -------------------------------------------------------------

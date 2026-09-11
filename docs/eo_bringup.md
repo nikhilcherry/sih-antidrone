@@ -68,7 +68,7 @@ Pi 4 despite the Pi 5 being the better computer.
 
 ### Camera — the stock-webcam decision is the one that costs you range
 
-Run `python3 -m himkavach.eo.optics` for the live table. As of now:
+Run `python3 -m aura.eo.optics` for the live table. As of now:
 
 | Camera | IFOV | px on a 0.3 m drone @ 500 m | Recognise range |
 |---|---|---|---|
@@ -143,9 +143,9 @@ Stream:
 
 ```bash
 # Pi
-python3 -m himkavach.eo.sender --device /dev/video0 --size 1280x720 --fps 30
+python3 -m aura.eo.sender --device /dev/video0 --size 1280x720 --fps 30
 # laptop
-python3 -m himkavach.eo.receiver --host 10.55.0.1 --show
+python3 -m aura.eo.receiver --host 10.55.0.1 --show
 ```
 
 ---
@@ -186,7 +186,7 @@ Measure it optically instead:
 
 ```bash
 python3 scripts/latency_timer.py                          # laptop
-python3 -m himkavach.eo.receiver --host 10.55.0.1 --show  # laptop, other terminal
+python3 -m aura.eo.receiver --host 10.55.0.1 --show  # laptop, other terminal
 ```
 
 Point the Pi's camera at the timer window, put both windows on screen, take one
@@ -239,7 +239,7 @@ serve MJPEG over HTTP, so the two halves meet with no glue code:
 
 ```bash
 # Pi
-python3 -m himkavach.eo.sender --http
+python3 -m aura.eo.sender --http
 
 # laptop
 ./scripts/demo_live.sh                 # or --local to rehearse on the laptop cam
@@ -343,7 +343,7 @@ those boxes survives a 0.50 threshold.
    argument: a 0.3 m drone is 4.2 px wide at 100 m on a wide lens. A box
    spanning 89% of the frame would be a drone a few centimetres from the lens,
    which is physically absurd. `optics.max_plausible_px()` supplies the
-   threshold and `himkavach/eo/detect_live.py` applies it.
+   threshold and `aura/eo/detect_live.py` applies it.
 
 ### Measured, same camera, same room
 

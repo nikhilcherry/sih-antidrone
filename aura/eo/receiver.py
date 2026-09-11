@@ -4,7 +4,7 @@ Connects to the Pi's sender, decodes frames, and reports link health. Also the
 intake point for the detection track: `frames()` is a generator, so the YOLO
 stage plugs in without knowing anything about sockets.
 
-    python3 -m himkavach.eo.receiver --host 10.55.0.1 --show
+    python3 -m aura.eo.receiver --host 10.55.0.1 --show
 
 Reported numbers, and what each one is honestly worth:
   fps        -- frames actually delivered per second end to end. Trustworthy.
@@ -92,7 +92,7 @@ def frames(host: str, port: int, retry: bool = True) -> Iterator[tuple[int, floa
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="HIMKAVACH EO receiver (laptop side)")
+    ap = argparse.ArgumentParser(description="AURA EO receiver (laptop side)")
     ap.add_argument("--host", default="10.55.0.1", help="Pi address (USB gadget default)")
     ap.add_argument("--port", type=int, default=8485)
     ap.add_argument("--show", action="store_true", help="display the stream (q to quit)")
@@ -119,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
                 writer.write(frame)
 
             if args.show:
-                cv2.imshow("HIMKAVACH EO", frame)
+                cv2.imshow("AURA EO", frame)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
 

@@ -9,7 +9,7 @@ Procedure:
   1. On the laptop:  python3 scripts/latency_timer.py
   2. Point the Pi's webcam at this window.
   3. Also on the laptop, in another terminal:
-         python3 -m himkavach.eo.receiver --host 10.55.0.1 --show
+         python3 -m aura.eo.receiver --host 10.55.0.1 --show
   4. Arrange both windows side by side and take ONE screenshot.
   5. Read the counter twice: live in this window, and as it appears inside the
      received frame. The difference in milliseconds IS the end-to-end latency
@@ -30,8 +30,8 @@ W, H = 1000, 420
 
 
 def main() -> int:
-    cv2.namedWindow("HIMKAVACH latency timer", cv2.WINDOW_NORMAL)
-    cv2.resizeWindow("HIMKAVACH latency timer", W, H)
+    cv2.namedWindow("AURA latency timer", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("AURA latency timer", W, H)
     t0 = time.monotonic()
     print(__doc__)
     while True:
@@ -53,7 +53,7 @@ def main() -> int:
         cv2.putText(frame, "point the Pi camera here, screenshot both windows together",
                     (40, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (90, 90, 90), 2, cv2.LINE_AA)
 
-        cv2.imshow("HIMKAVACH latency timer", frame)
+        cv2.imshow("AURA latency timer", frame)
         if cv2.waitKey(1) & 0xFF in (ord("q"), 27):
             break
     cv2.destroyAllWindows()

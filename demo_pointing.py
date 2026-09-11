@@ -2,8 +2,8 @@
 
     python3 demo_pointing.py
 """
-from himkavach.atmosphere import atmosphere
-from himkavach.sim import run
+from aura.atmosphere import atmosphere
+from aura.sim import run
 
 CASES = [
     ("Sea level, standard day",      0,   0.0,  6.0),
