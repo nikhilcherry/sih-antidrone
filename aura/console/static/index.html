@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AURA Ops Console</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 29 27H3z' fill='none' stroke='%239DB0C0' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='19' r='3' fill='%232A9BCB'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/console.css">
+</head>
+<body>
+<canvas id="terrain" aria-hidden="true"></canvas>
+
+<header class="bar">
+  <div class="brand">
+    <svg viewBox="0 0 34 34" aria-hidden="true">
+      <path d="M17 3 31 29H3z" fill="none" stroke="#9DB0C0" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M10 29 17 16l7 13" fill="none" stroke="#3A5268" stroke-width="1.4"/>
+      <circle cx="17" cy="20" r="3.2" fill="#2A9BCB"/>
+      <circle cx="17" cy="20" r="6.5" fill="none" stroke="#2A9BCB" stroke-width="1" opacity=".5"/>
+    </svg>
+    <div>
+      <div class="word">AURA</div>
+      <div class="tagline">High-altitude counter-UAS &middot; ops console</div>
+    </div>
+  </div>
+  <div class="ps">SIH26050 &middot; DRDO / DDP iDEX</div>
+  <div class="links" aria-live="polite">
+    <span class="chip off" id="chip-bus"><i></i>BUS <b>connecting</b></span>
+    <span class="chip off" id="chip-eo"><i></i>EO NODE <b>&mdash;</b></span>
+    <span class="chip off" id="chip-sdr"><i></i>SDR <b>&mdash;</b></span>
+    <span class="chip" id="chip-view"><b>1</b>&nbsp;VIEWER</span>
+  </div>
+  <div class="clock mono" id="clock">--:--:--</div>
+</header>
+
+<main class="grid">
+  <div class="col c1">
+  <section class="panel env" aria-labelledby="h-env">
+    <h2 class="ph" id="h-env">Environment <small>deployment site</small></h2>
+    <div class="presets" id="presets" role="group" aria-label="Reference deployments"></div>
+    <div id="controls"></div>
+    <dl class="atm">
+      <div><dt>Air temp</dt><dd id="a-t">&mdash;</dd></div>
+      <div><dt>Pressure</dt><dd id="a-p">&mdash;</dd></div>
+      <div><dt>&rho; / &rho;&#8320;</dt><dd id="a-r">&mdash;</dd></div>
+    </dl>
+  </section>
+  <section class="panel eo" aria-labelledby="h-eo">
+    <h2 class="ph" id="h-eo">EO channel <small>Pi + USB camera</small></h2>
+    <div class="feed" id="feed"></div>
+    <div class="eo-stats">
+      <div class="tile"><div class="k">Detect range</div><div class="v mono" id="eo-r" style="font-size:22px">&mdash;</div><div class="s" id="eo-rs">&nbsp;</div></div>
+      <div class="tile"><div class="k">Visibility</div><div class="v mono" id="eo-v" style="font-size:22px">&mdash;</div><div class="s">Koschmieder</div></div>
+    </div>
+  </section>
+  </div>
+  <div class="col c2">
+  <section class="panel point" id="point" aria-labelledby="h-point">
+    <div class="ph-row">
+      <h2 class="ph" id="h-point">Pointing <small>effector vs target</small><span class="busy" id="busy-core">computing&hellip;</span></h2>
+      <div class="seg" role="group" aria-label="Compensation layer">
+        <button id="b-unc" aria-pressed="true"><i></i>Uncompensated</button>
+        <button id="b-cmp" aria-pressed="false"><i></i>Compensated</button>
+      </div>
+    </div>
+    <div class="point-body">
+      <div>
+        <div class="scope-wrap"><canvas id="scope" role="img" aria-label="Scope view of the effector aim point relative to the drone"></canvas></div>
+        <div class="scope-cap">azimuth axis &middot; single-axis loop &middot; trail = last 2 s &middot; <kbd>C</kbd> compensation &middot; <kbd>space</kbd> pause</div>
+      </div>
+      <div class="stats">
+        <div class="tile hero">
+          <div class="k" id="k-tot">On target</div>
+          <div class="v mono" id="v-tot">&mdash;</div>
+          <div class="s" id="s-tot">&nbsp;</div>
+        </div>
+        <div class="tile">
+          <div class="k"><i style="background:var(--unc)"></i>RMS &middot; uncompensated</div>
+          <div class="v mono" id="v-unc">&mdash;</div>
+        </div>
+        <div class="tile">
+          <div class="k"><i style="background:var(--cmp)"></i>RMS &middot; compensated</div>
+          <div class="v mono" id="v-cmp">&mdash;</div>
+          <div class="s" id="s-gain">&nbsp;</div>
+        </div>
+        <div class="tile">
+          <div class="k" id="k-miss">Miss distance</div>
+          <div class="v mono" id="v-miss">&mdash;</div>
+          <div class="s" id="s-miss">&nbsp;</div>
+        </div>
+        <div class="tile endure">
+          <div class="k">Predicted endurance</div>
+          <div class="v mono" id="en-v">&mdash;</div>
+          <div class="meter"><span id="en-bar"></span></div>
+          <div class="s" id="en-s">&nbsp;</div>
+        </div>
+      </div>
+    </div>
+    <figure class="trace">
+      <div class="legend">
+        <span><i style="background:var(--unc)"></i>Uncompensated</span>
+        <span><i style="background:var(--cmp)"></i>Compensated</span>
+        <span><i class="band"></i><span id="band-lbl">on-target corridor</span></span>
+      </div>
+      <div class="figure-body"><svg class="chart" id="trace" role="img" aria-label="Azimuth pointing error over the 20 second pass"></svg></div>
+      <div class="tip" id="trace-tip"></div>
+    </figure>
+  </section>
+  <section class="panel sweep" aria-labelledby="h-sweep">
+    <h2 class="ph" id="h-sweep">Altitude sweep <small id="sweep-sub">&nbsp;</small><span class="busy" id="busy-sweep">computing&hellip;</span></h2>
+    <figure>
+      <div class="legend">
+        <span><i style="background:var(--unc)"></i>Uncompensated</span>
+        <span><i style="background:var(--cmp)"></i>Compensated</span>
+      </div>
+      <svg class="chart" id="sweep" role="img" aria-label="RMS pointing error against deployment altitude"></svg>
+      <div class="tip" id="sweep-tip"></div>
+    </figure>
+    <details class="table"><summary>table</summary><table id="sweep-table"></table></details>
+  </section>
+  </div>
+  <div class="col c3">
+  <section class="panel health" id="health" aria-labelledby="h-health">
+    <h2 class="ph" id="h-health">Subsystem health <small>at this site</small></h2>
+    <ul class="hl" id="health-list"></ul>
+  </section>
+  <section class="panel ablation" aria-labelledby="h-abl">
+    <h2 class="ph" id="h-abl">What each technique buys<span class="busy" id="busy-abl">computing&hellip;</span></h2>
+    <div class="abl-sum" id="abl-sum">&nbsp;</div>
+    <div class="abl" id="abl"></div>
+    <p class="note">Leave-one-out: remove one technique, keep the other four. Techniques interact, so bars do not sum to the total.</p>
+  </section>
+  </div>
+</main>
+
+<footer class="boundary">
+  <span><b>SIMULATED</b>pointing loop and degradation models &mdash; engineering approximations, not chamber data</span>
+  <span><b>LIVE</b>EO feed when the Pi is on the USB link</span>
+  <span><b>RECEIVE-ONLY</b>the SDR never transmits; neutralisation is modelled</span>
+</footer>
+
+<script type="module" src="/static/console.js"></script>
+</body>
+</html>

@@ -83,6 +83,9 @@ scripts/eo_loopback_test.sh prove the EO chain with no Pi attached
 scripts/latency_timer.py   optical glass-to-display latency measurement
 scripts/demo_live.sh       the demo: Pi camera -> laptop -> detector -> boxes
 aura/eo/http_stream.py     MJPEG over HTTP, so any tool can open the feed
+aura/scenarios.py          the four reference deployments, shared by demo + console
+aura/console/              the ops console: FastAPI + WebSocket bus + one screen
+tests/test_console.py      console guards — the screen must match this README
 ```
 
 ## Setup
@@ -101,6 +104,41 @@ python3 demo_pointing.py
 
 Vision track needs its own venv — system torch is CPU-only and the RTX 5050
 (Blackwell, sm_120) requires the cu128 build. See `requirements.txt`.
+
+## The ops console
+
+```bash
+python3 -m aura.console                  # http://127.0.0.1:8600
+python3 -m aura.console --host 0.0.0.0   # let the projector laptop join the bus
+```
+
+The one screen the panel watches. Every browser that opens it shares **one**
+environment over a WebSocket bus, so the presenter's sliders drive the
+projector. It runs fully offline — fonts are vendored, nothing loads from a CDN.
+
+- **Scope** — replays the 20 s crossing pass: the effector aim point against a
+  0.3 m drone at the chosen engagement range. `C` toggles compensation.
+- **Environment** — altitude, ISA departure, wind, visibility, range; keys
+  `1`–`4` load the four scenarios above.
+- **Subsystem health** — every degradation model at this site, banded
+  nominal / degraded / critical, with which technique compensates it.
+- **Altitude sweep** and **what each technique buys** (leave-one-out ablation).
+- **EO channel** — the Pi's MJPEG feed when it answers on the USB link; the
+  **SDR** chip reads sysfs, so it reports honestly whether a dongle is present.
+
+Nothing on it is a dashboard-only number: every value is a call into
+`aura.atmosphere`, `aura.degradation` or `aura.sim` with the same seed as
+`demo_pointing.py`, and `tests/test_console.py` pins the Siachen figures above.
+
+At 5500 m and 400 m range the uncompensated loop is on the drone **0%** of the
+pass; compensated, **71%**. That is the break-it / fix-it beat in one number.
+
+**What the ablation says, which we should fix before a judge reads it:** at
+altitude, removing **cable torque feedforward** makes RMS error *better* (by
+48–80 µrad), and **gain scheduling** buys ~0 µrad. The cause is in the loop, not
+the ablation: the cable's restoring spring happens to offset a tracking lag the
+controller leaves, so cancelling the spring exposes the lag. The headline
+numbers are unchanged; the controller needs T3's attention.
 
 ## The EO channel, and its honest limit
 

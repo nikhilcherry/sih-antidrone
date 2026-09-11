@@ -34,6 +34,14 @@ class SimResult:
     saturated_frac: float
 
 
+# The five compensation techniques, individually switchable so the ablation can
+# price each one in microradians. Order matches the README's numbered list.
+TECHNIQUES = ("boresight_cal", "cable_ff", "gain_schedule", "wind_observer",
+              "gyro_bias")
+
+BORESIGHT_CAL_RESIDUAL = 0.12   # fraction of thermo-elastic drift left after calibration
+
+
 def crossing_target(t: np.ndarray, closest_range_m: float = 120.0,
                     speed_ms: float = 25.0) -> np.ndarray:
     """Bearing to a drone flying a straight crossing pass, rad."""
@@ -42,8 +50,14 @@ def crossing_target(t: np.ndarray, closest_range_m: float = 120.0,
 
 
 def run(atm: AtmState, spec: TurretSpec = TurretSpec(), *, compensate: bool,
-        wind_speed: float = 15.0, duration_s: float = 20.0, dt: float = 0.002,
-        seed: int = 0) -> SimResult:
+        techniques=None, wind_speed: float = 15.0, duration_s: float = 20.0,
+        dt: float = 0.002, seed: int = 0) -> SimResult:
+    """`techniques` picks a subset of TECHNIQUES when `compensate` is True
+    (default: all five). Ignored when `compensate` is False."""
+    on = set(TECHNIQUES if techniques is None else techniques) if compensate else set()
+    unknown = on - set(TECHNIQUES)
+    if unknown:
+        raise ValueError(f"unknown techniques: {sorted(unknown)}")
     rng = np.random.default_rng(seed)
     n = int(duration_s / dt)
     t = np.arange(n) * dt
@@ -62,7 +76,7 @@ def run(atm: AtmState, spec: TurretSpec = TurretSpec(), *, compensate: bool,
 
     # --- controller ---------------------------------------------------------
     w_n = 2 * np.pi * spec.loop_bw_hz
-    if compensate:
+    if "gain_schedule" in on:
         # Gain scheduling: retune against the MEASURED cold plant so the loop
         # keeps its designed bandwidth and damping instead of going sluggish.
         kp = spec.inertia * w_n ** 2 + k_cable
@@ -85,13 +99,15 @@ def run(atm: AtmState, spec: TurretSpec = TurretSpec(), *, compensate: bool,
     sat = 0
 
     # Residual errors the compensation CANNOT remove -- model fidelity limits.
-    bs_resid = boresight * (0.12 if compensate else 1.0)   # 88% cal removal
-    ff_gain = 0.85 if compensate else 0.0                  # cable model accuracy
-    dob_gain = 0.70 if compensate else 0.0                 # observer authority
+    bs_resid = boresight * (BORESIGHT_CAL_RESIDUAL if "boresight_cal" in on else 1.0)
+    ff_gain = 0.85 if "cable_ff" in on else 0.0              # cable model accuracy
+    dob_gain = 0.70 if "wind_observer" in on else 0.0        # observer authority
+    track_bias = "gyro_bias" in on
+    observe = "wind_observer" in on
 
     for i in range(n):
         bias += rng.normal(0.0, gyro_sigma * np.sqrt(dt))
-        if compensate:
+        if track_bias:
             # Slow bias tracker (Kalman bias state, heavily low-passed).
             bias_est += 0.004 * (bias - bias_est)
         meas = theta + bias - bias_est + rng.normal(0.0, 15e-6)
@@ -115,7 +131,7 @@ def run(atm: AtmState, spec: TurretSpec = TurretSpec(), *, compensate: bool,
         omega += alpha * dt
         theta += omega * dt
 
-        if compensate:
+        if observe:
             # Observer: reconstruct the unmodelled torque from the residual.
             resid = spec.inertia * alpha - (tau_c - b * omega - k_cable * theta)
             dob_est += 0.02 * (resid - dob_est)
