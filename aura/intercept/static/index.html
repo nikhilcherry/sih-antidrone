@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AURA Intercept</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='9' y='9' width='14' height='14' fill='none' stroke='%231B2430' stroke-width='1.5'/%3E%3Crect x='9' y='9' width='14' height='14' fill='none' stroke='%231B2430' stroke-width='1.5' transform='rotate(45 16 16)'/%3E%3Ccircle cx='16' cy='16' r='3' fill='none' stroke='%239C3B22' stroke-width='1.5'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/intercept.css">
+</head>
+<body data-verdict="CLEAR">
+
+<header class="head">
+  <div class="lockup">
+    <svg class="seal" viewBox="0 0 52 52" aria-hidden="true">
+      <rect x="15" y="15" width="22" height="22" transform="rotate(45 26 26)"/>
+      <rect x="15" y="15" width="22" height="22"/>
+      <circle cx="26" cy="26" r="7"/>
+      <circle cx="26" cy="26" r="4.5"/>
+    </svg>
+    <div>
+      <p class="eyebrow">AURA &middot; SIH26050 &middot; Counter-UAS</p>
+      <h1>Intercept console</h1>
+    </div>
+  </div>
+  <dl class="meta mono">
+    <div><dt>Sheet</dt><dd>AURA-IC-01</dd></div>
+    <div><dt>Rev</dt><dd>2026-09-11</dd></div>
+    <div><dt>Class</dt><dd>Unclassified &middot; demonstration</dd></div>
+    <div><dt>Source</dt><dd id="m-src">&mdash;</dd></div>
+    <div><dt>Detector</dt><dd id="m-det">&mdash;</dd></div>
+    <div><dt>Time</dt><dd id="clock">--:--:--Z</dd></div>
+  </dl>
+</header>
+
+<main class="sheet">
+  <section class="content" aria-label="Finding and sensor feed">
+    <div class="finding">
+      <p class="eyebrow">Finding</p>
+      <h2 id="statement">Sky clear.</h2>
+      <p class="body" id="finding-body">No aerial contact in sector.</p>
+      <div class="stamp" id="stamp" hidden></div>
+    </div>
+
+    <div class="alert" id="alert" role="alert" aria-hidden="true">
+      <span class="alert-label" id="alert-label">Alert</span>
+      <span class="alert-body" id="alert-body"></span>
+    </div>
+
+    <figure class="plot feed">
+      <img id="video" src="/stream.mjpg" alt="Sensor feed with plotted tracks">
+      <figcaption class="cap" id="fig1-cap">FIG. 1 &mdash; EO sensor feed</figcaption>
+    </figure>
+
+    <div class="block">
+      <table class="data record" id="record">
+        <thead><tr><th>Stage</th><th>Detect</th><th>Confirm</th><th>Identify</th><th>Decide</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td>Time</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td>Entry</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        </tbody>
+      </table>
+      <p class="cap" id="record-cap">TABLE 1 &mdash; Process record. No lead track.</p>
+    </div>
+  </section>
+
+  <section class="figures" aria-label="Tracks">
+    <div class="readouts">
+      <div class="field"><span class="eyebrow">Confirmed</span><span class="readout" id="n-det">0</span></div>
+      <div class="field"><span class="eyebrow">Passed</span><span class="readout" id="n-ok">0</span></div>
+      <div class="field"><span class="eyebrow">Neutralised</span><span class="readout" id="n-kill">0</span></div>
+      <div class="field"><span class="eyebrow">Detect&ndash;kill</span><span class="readout" id="n-d2k">&mdash;</span></div>
+    </div>
+
+    <figure class="plot angular">
+      <svg id="fig2" viewBox="0 0 312 208" preserveAspectRatio="none" role="img"
+           aria-label="Angular track plot, bearing against elevation"></svg>
+      <figcaption class="cap">FIG. 2 &mdash; Bearing &times; elevation, deg</figcaption>
+    </figure>
+
+    <div class="block">
+      <table class="data contacts">
+        <thead><tr><th>Trk</th><th>Status</th><th class="n">P</th><th class="n">Brg °</th><th class="n">Elev °</th><th class="n">Rng m</th></tr></thead>
+        <tbody id="contacts"></tbody>
+      </table>
+      <p class="cap" id="contacts-cap">TABLE 2 &mdash; Contacts in sector.</p>
+    </div>
+
+    <div class="block act">
+      <p class="eyebrow">Selected contact &nbsp;<span class="mono sel" id="sel">&mdash;</span></p>
+      <div class="buttons">
+        <button id="b-friendly">Declare friendly</button>
+        <button class="destructive" id="b-hostile">Declare hostile</button>
+        <button class="destructive" id="b-engage">Authorise engagement</button>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="ops" aria-label="Controls and log">
+    <div class="block hitl">
+      <p class="eyebrow">Human in the loop <kbd>L</kbd></p>
+      <div class="pair" role="group" aria-label="Human in the loop">
+        <button data-hitl="0" id="h-off">Off</button>
+        <button data-hitl="1" id="h-on">On</button>
+      </div>
+      <div class="voice" id="voice" hidden>
+        <button class="primary talk" id="talk">Hold to speak <kbd>T</kbd></button>
+        <label class="field"><span class="eyebrow">Typed order</span>
+          <input id="cmd" class="mono" placeholder="destroy bravo" autocomplete="off" spellcheck="false"></label>
+        <table class="data exchange"><tbody id="exchange"><tr class="empty"><td>&mdash;</td><td>No exchange.</td></tr></tbody></table>
+        <p class="cap" id="voice-cap">&mdash;</p>
+      </div>
+    </div>
+
+    <div class="block">
+      <label class="field">
+        <span class="eyebrow">Source</span>
+        <select id="source" class="mono"></select>
+      </label>
+      <div class="buttons">
+        <label class="button" tabindex="0" id="upload-btn">Upload footage<input type="file" id="upload" accept="video/*" hidden></label>
+      </div>
+    </div>
+
+    <div class="block">
+      <p class="eyebrow">Playback <kbd>Space</kbd> <kbd>R</kbd></p>
+      <div class="buttons">
+        <button id="p-pause">Hold playback</button>
+        <button id="p-restart">Restart</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <p class="eyebrow">Rules of engagement <kbd>A</kbd> <kbd>H</kbd></p>
+      <div class="pair" role="group" aria-label="Rules of engagement">
+        <button data-mode="AUTO" id="m-auto">Weapons free</button>
+        <button data-mode="HOLD" id="m-hold">Hold</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <p class="eyebrow">Friendly IFF beacon &middot; simulated <kbd>F</kbd></p>
+      <div class="pair" role="group" aria-label="Friendly IFF beacon">
+        <button data-beacon="0" id="bc-off">Off</button>
+        <button data-beacon="1" id="bc-on">On</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <p class="eyebrow">Geometry gate</p>
+      <div class="pair" role="group" aria-label="Geometry gate">
+        <button data-gate="0" id="g-off">Off</button>
+        <button data-gate="1" id="g-on">On</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <p class="eyebrow">Record &middot; annotated feed, H.264</p>
+      <div class="buttons"><button id="rec">Start recording</button></div>
+      <p class="cap" id="rec-cap">Not recording.</p>
+    </div>
+
+    <div class="block">
+      <p class="eyebrow">Session <span class="mono sel" id="session">&mdash;</span></p>
+      <div class="buttons">
+        <button id="report">After-action report</button>
+        <button class="destructive" id="reset">Clear board <kbd>C</kbd></button>
+      </div>
+      <p class="cap">Clearing the board closes this session and opens a new report.</p>
+    </div>
+
+    <div class="block log">
+      <table class="data">
+        <thead><tr><th>Time&nbsp;Z</th><th>Trk</th><th>Entry</th></tr></thead>
+        <tbody id="log"></tbody>
+      </table>
+      <p class="cap">TABLE 3 &mdash; Engagement log, newest first.</p>
+    </div>
+
+    <div class="block notes">
+      <p class="eyebrow">Notes</p>
+      <ol class="cap">
+        <li>Effector modelled. NEUTRALISED is a fire-control decision and a logged command. The SDR is receive-only; no RF is emitted (Indian Telegraph Act, WPC).</li>
+        <li>IFF replies are supplied by the operator console for this demonstration.</li>
+        <li>Human in the loop: contacts are designated A&ndash;Z and engaged only on an operator order. Speech by ElevenLabs, intent by Gemini; the console validates every order against the board, and a strike on a friendly needs a spoken confirmation.</li>
+        <li>One effector. Hostiles are engaged one at a time, nearest first; the rest queue.</li>
+        <li>Range is estimated from apparent size of a 0.3 m airframe on a known lens; withheld for recorded footage.</li>
+      </ol>
+    </div>
+  </section>
+</main>
+<script src="/static/intercept.js"></script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AURA After-Action Report</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='9' y='9' width='14' height='14' fill='none' stroke='%231B2430' stroke-width='1.5'/%3E%3Crect x='9' y='9' width='14' height='14' fill='none' stroke='%231B2430' stroke-width='1.5' transform='rotate(45 16 16)'/%3E%3Ccircle cx='16' cy='16' r='3' fill='none' stroke='%239C3B22' stroke-width='1.5'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/intercept.css">
+<style>
+  /* The report is a document first: it scrolls, and it prints. */
+  body.report{height:auto!important;overflow:visible!important;display:block}
+  .report main{padding:var(--s4) var(--s5) var(--s6);display:flex;flex-direction:column;gap:30px;max-width:1400px}
+  .report section{display:flex;flex-direction:column;gap:var(--s3)}
+  .report .summary{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:var(--s3) var(--s4)}
+  .report .data td{vertical-align:middle}
+  .report .ev{width:112px}
+  .report .ev figure{margin:0;width:104px;height:78px;border:1px solid var(--ink);background:var(--paper-raised) var(--raster);
+    display:grid;place-items:center;overflow:hidden}
+  .report .ev img{max-width:100%;max-height:100%;display:block}
+  .report .ev .none{font:400 9px/1.3 var(--mono);color:var(--ink-faint);text-transform:uppercase;letter-spacing:.1em;text-align:center}
+  .report .tools{display:flex;gap:var(--s2);flex-wrap:wrap}
+  .report .log td:last-child{font-family:var(--sans);color:var(--ink-muted)}
+  .report .log td.crit{color:var(--oxide)} .report .log td.ok{color:var(--green)}
+  @media (max-width:1000px){.report main{padding-inline:16px}.report .summary{grid-template-columns:repeat(2,1fr)}
+    .report .scroll{overflow-x:auto}}
+  @media print{
+    @page{size:A4 landscape;margin:12mm}
+    .report .tools{display:none}
+    .report main{padding:14px 0 0;max-width:none}
+    .report .head{padding:0 0 10px}
+    .report tr{break-inside:avoid}
+    body.report{background:#fff}
+  }
+</style>
+</head>
+<body class="report">
+<header class="head">
+  <div class="lockup">
+    <svg class="seal" viewBox="0 0 52 52" aria-hidden="true">
+      <rect x="15" y="15" width="22" height="22" transform="rotate(45 26 26)"/>
+      <rect x="15" y="15" width="22" height="22"/>
+      <circle cx="26" cy="26" r="7"/>
+      <circle cx="26" cy="26" r="4.5"/>
+    </svg>
+    <div>
+      <p class="eyebrow">AURA &middot; SIH26050 &middot; Counter-UAS</p>
+      <h1>After-action report</h1>
+    </div>
+  </div>
+  <dl class="meta mono">
+    <div><dt>Sheet</dt><dd>AURA-AAR-01</dd></div>
+    <div><dt>Session</dt><dd id="r-session">&mdash;</dd></div>
+    <div><dt>Class</dt><dd>Unclassified &middot; demonstration</dd></div>
+    <div><dt>Period</dt><dd id="r-period">&mdash;</dd></div>
+    <div><dt>Detector</dt><dd id="r-model">&mdash;</dd></div>
+    <div><dt>Issued</dt><dd id="r-issued">&mdash;</dd></div>
+  </dl>
+</header>
+
+<main>
+  <div class="tools">
+    <button class="primary" onclick="window.print()">Print or save as PDF</button>
+    <button id="r-json">Download JSON</button>
+    <button onclick="load()">Refresh</button>
+  </div>
+
+  <section>
+    <p class="eyebrow">Finding</p>
+    <h2 id="r-statement">No engagements recorded.</h2>
+    <p class="body" id="r-body">&mdash;</p>
+  </section>
+
+  <section>
+    <div class="summary">
+      <div class="field"><span class="eyebrow">Confirmed</span><span class="readout" id="s-conf">&mdash;</span></div>
+      <div class="field"><span class="eyebrow">Passed</span><span class="readout" id="s-pass">&mdash;</span></div>
+      <div class="field"><span class="eyebrow">Neutralised</span><span class="readout" id="s-kill">&mdash;</span></div>
+      <div class="field"><span class="eyebrow">Lost</span><span class="readout" id="s-lost">&mdash;</span></div>
+      <div class="field"><span class="eyebrow">Detect&ndash;kill, mean</span><span class="readout" id="s-mean">&mdash;</span></div>
+      <div class="field"><span class="eyebrow">Detect&ndash;kill, fastest</span><span class="readout" id="s-best">&mdash;</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Engagements</h2>
+    <div class="scroll">
+      <table class="data">
+        <thead><tr><th>No.</th><th>Trk</th><th>Evidence</th><th>Detect Z</th><th>Confirm Z</th><th>IFF</th>
+          <th>Decision</th><th>Effect Z</th><th class="n">D&ndash;K s</th><th class="n">Brg &deg;</th><th class="n">Elev &deg;</th><th>Outcome</th></tr></thead>
+        <tbody id="r-rows"></tbody>
+      </table>
+    </div>
+    <p class="cap">TABLE 1 &mdash; Engagements, one row per confirmed track. Evidence is the frame at the moment of decision. D&ndash;K: first detection to kill assessment, excluding time with playback held.</p>
+  </section>
+
+  <section>
+    <h2>Log</h2>
+    <div class="scroll">
+      <table class="data log">
+        <thead><tr><th>Time Z</th><th>Trk</th><th>Entry</th></tr></thead>
+        <tbody id="r-log"></tbody>
+      </table>
+    </div>
+    <p class="cap">TABLE 2 &mdash; Engagement log, oldest first.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Notes</p>
+    <ol class="cap" style="margin:0;padding-left:1.4em">
+      <li>Effector modelled. NEUTRALISED is a fire-control decision and a logged command. The SDR is receive-only; no RF is emitted (Indian Telegraph Act, WPC).</li>
+      <li>IFF replies were supplied by the operator console for this demonstration.</li>
+      <li>One effector. Hostiles were engaged one at a time, nearest first.</li>
+      <li id="r-dir">Session files: &mdash;</li>
+    </ol>
+  </section>
+</main>
+<script src="/static/report.js"></script>
+</body>
+</html>

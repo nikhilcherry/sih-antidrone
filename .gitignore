@@ -5,3 +5,5 @@ data/*.iq
 data/*.csv
 *.png
 .pytest_cache/
+data/intercept_uploads/
+data/intercept_sessions/
